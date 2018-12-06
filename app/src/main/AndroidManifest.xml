@@ -22,7 +22,7 @@
 
         <service android:name="com.nice.service.MyService"/>
         <service
-                android:name="com.nice.service.TikTokAccessibilityService"
+                android:name="com.nice.service.TankAccessibilityService"
                 android:label="抖音引流脚本"
                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>

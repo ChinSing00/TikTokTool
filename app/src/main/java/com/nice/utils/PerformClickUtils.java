@@ -30,10 +30,10 @@ public class PerformClickUtils {
         List<AccessibilityNodeInfo> nodeInfoList = accessibilityNodeInfo.findAccessibilityNodeInfosByText(text);
         if (nodeInfoList != null && !nodeInfoList.isEmpty()) {
             for (AccessibilityNodeInfo nodeInfo : nodeInfoList) {
-                if (nodeInfo != null && (text.equals(nodeInfo.getText()) || text.equals(nodeInfo.getContentDescription()))) {
-                    performClick(nodeInfo);
-                    break;
-                }
+//                if (nodeInfo != null && (text.equals(nodeInfo.getText()) || text.equals(nodeInfo.getContentDescription()))) {
+                performClick(nodeInfo);
+                break;
+//                }
             }
         }
     }
@@ -198,7 +198,7 @@ public class PerformClickUtils {
         List<AccessibilityServiceInfo> serviceInfos = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC);
         for (AccessibilityServiceInfo info : serviceInfos) {
             String id = info.getId();
-            if (id.contains("TikTokAccessibilityService")) {
+            if (id.contains("TankAccessibilityService")) {
                 return true;
             }
         }

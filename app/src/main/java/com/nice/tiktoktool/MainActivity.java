@@ -18,6 +18,7 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.*;
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.nice.config.Config;
@@ -28,6 +29,7 @@ import com.nice.utils.AESUtils;
 import com.nice.utils.ApplicationUtil;
 import com.nice.utils.JumpPermissionManagement;
 import com.nice.utils.PerformClickUtils;
+
 import okhttp3.*;
 
 import java.io.IOException;
@@ -77,7 +79,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Comp
                                     versionList.add(viewId.getVersion());
                                 }
                             }
-                            Collections.reverse(versionList);
+                            Collections.sort(versionList, Collections.reverseOrder());
 
                             //绑定版本下拉框数据
                             adapter = new ArrayAdapter<>(getApplication(),
@@ -121,9 +123,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Comp
         adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item, getOptionSource());
         optionSpinner.setAdapter(adapter);
-
-        //启动悬浮窗
-        startService(new Intent(this, MyService.class).putExtra(MyService.ACTION, MyService.SHOW));
 
         //请求设备信息
         requestDeviceInfo();
@@ -217,12 +216,68 @@ public class MainActivity extends Activity implements View.OnClickListener, Comp
         List<String> list = new ArrayList<>();
         list.add("关注");
         list.add("取消关注");
-        list.add("私信粉丝");
-        list.add("私信关注");
-        list.add("私信他人粉丝");
-        list.add("私信他人关注");
+        list.add("私信自己的关注/粉丝");
+        list.add("私信他人的关注/粉丝");
 //        list.add("私信评论用户");
         return list;
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+        if (adapterView.getId() == R.id.option_spinner) {
+            if (i == 0) {
+                Config.getInstance(this).setOption(Config.CONCERN);
+                attentionSetting.setVisibility(View.VISIBLE);
+                privatelySetting.setVisibility(View.GONE);
+                //速度显示
+                attentionSpeedTv.setText("(" + Config.getInstance(this).getAttentionSpeed() / 1000 + "~" + (Config.getInstance(this).getAttentionSpeed() / 1000 + 2) + "秒/个)");
+                attentionSpeedSb.setProgress((int) (Config.getInstance(this).getAttentionSpeed() / 1000));
+                privatelySpeedTv.setText("(" + Config.getInstance(this).getPrivatelySpeed() / 1000 + "~" + (Config.getInstance(this).getPrivatelySpeed() / 1000 + 2) + "秒/个)");
+                privatelySpeedSb.setProgress((int) (Config.getInstance(this).getPrivatelySpeed() / 1000));
+            }
+            if (i == 1) {
+                Config.getInstance(this).setOption(Config.CANCEL_CONCERN);
+                attentionSetting.setVisibility(View.VISIBLE);
+                privatelySetting.setVisibility(View.GONE);
+                //速度显示
+                attentionSpeedTv.setText("(" + Config.getInstance(this).getAttentionSpeed() / 1000 + "~" + (Config.getInstance(this).getAttentionSpeed() / 1000 + 2) + "秒/个)");
+                attentionSpeedSb.setProgress((int) (Config.getInstance(this).getAttentionSpeed() / 1000));
+                privatelySpeedTv.setText("(" + Config.getInstance(this).getPrivatelySpeed() / 1000 + "~" + (Config.getInstance(this).getPrivatelySpeed() / 1000 + 2) + "秒/个)");
+                privatelySpeedSb.setProgress((int) (Config.getInstance(this).getPrivatelySpeed() / 1000));
+            }
+            if (i == 2) {
+                Config.getInstance(this).setOption(Config.PRIVATELY);
+                attentionSetting.setVisibility(View.GONE);
+                privatelySetting.setVisibility(View.VISIBLE);
+                //私信内容显示
+                privatelyContent.setText(Config.getInstance(this).getPrivatelyContentText());
+            }
+            if (i == 3) {
+                Config.getInstance(this).setOption(Config.PRIVATELY);
+                attentionSetting.setVisibility(View.GONE);
+                privatelySetting.setVisibility(View.VISIBLE);
+                //私信内容显示
+                privatelyContent.setText(Config.getInstance(this).getPrivatelyContentText());
+            }
+            if (i == 4) {
+                Config.getInstance(this).setOption(Config.COMMENT_PRIVATELY);
+                attentionSetting.setVisibility(View.GONE);
+                privatelySetting.setVisibility(View.VISIBLE);
+                //私信内容显示
+                privatelyContent.setText(Config.getInstance(this).getPrivatelyContentText());
+            }
+        }
+        if (adapterView.getId() == R.id.tiktok_version_spinner) {
+            Map<String, String> viewIdMap = new HashMap<>();
+            for (ViewId viewId : Config.getInstance(getApplicationContext()).getViewIds()) {
+                //筛选版本
+                if (versionList.get(i).equals(viewId.getVersion())) {
+                    viewIdMap.put(viewId.getClickInfo(), viewId.getViewId());
+                }
+            }
+            Config.getInstance(getApplicationContext()).setViewIdByVersionMap(viewIdMap);
+        }
+
     }
 
     public void setActiviteLogo() {
@@ -423,89 +478,37 @@ public class MainActivity extends Activity implements View.OnClickListener, Comp
             openPermission.setChecked(false);
         }
 
+        if (Config.getInstance(this).getViewIds() != null) {
+            //刷新绑定版本下拉框数据
+            versionList = new ArrayList<>();
+            for (ViewId viewId : Config.getInstance(this).getViewIds()) {
+                if (!TextUtils.isEmpty(viewId.getVersion()) && !versionList.contains(viewId.getVersion())) {
+                    versionList.add(viewId.getVersion());
+                }
+            }
+            Collections.sort(versionList, Collections.reverseOrder());
+
+            //绑定版本下拉框数据
+            adapter = new ArrayAdapter<>(getApplication(),
+                    android.R.layout.simple_spinner_dropdown_item, versionList);
+            tiktokVersionSpinner.setAdapter(adapter);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         changeStatus();
+        startService(new Intent(this, MyService.class).putExtra(MyService.ACTION, MyService.HIDE));
     }
 
     @Override
     protected void onPause() {
+        //启动悬浮窗
+        startService(new Intent(this, MyService.class).putExtra(MyService.ACTION, MyService.SHOW));
         super.onPause();
     }
 
-    @Override
-    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-        if (adapterView.getId() == R.id.option_spinner) {
-            if (i == 0) {
-                Config.getInstance(this).setOption(Config.CONCERN);
-                attentionSetting.setVisibility(View.VISIBLE);
-                privatelySetting.setVisibility(View.GONE);
-                //速度显示
-                attentionSpeedTv.setText("(" + Config.getInstance(this).getAttentionSpeed() / 1000 + "~" + (Config.getInstance(this).getAttentionSpeed() / 1000 + 2) + "秒/个)");
-                attentionSpeedSb.setProgress((int) (Config.getInstance(this).getAttentionSpeed() / 1000));
-                privatelySpeedTv.setText("(" + Config.getInstance(this).getPrivatelySpeed() / 1000 + "~" + (Config.getInstance(this).getPrivatelySpeed() / 1000 + 2) + "秒/个)");
-                privatelySpeedSb.setProgress((int) (Config.getInstance(this).getPrivatelySpeed() / 1000));
-            }
-            if (i == 1) {
-                Config.getInstance(this).setOption(Config.CANCEL_CONCERN);
-                attentionSetting.setVisibility(View.VISIBLE);
-                privatelySetting.setVisibility(View.GONE);
-                //速度显示
-                attentionSpeedTv.setText("(" + Config.getInstance(this).getAttentionSpeed() / 1000 + "~" + (Config.getInstance(this).getAttentionSpeed() / 1000 + 2) + "秒/个)");
-                attentionSpeedSb.setProgress((int) (Config.getInstance(this).getAttentionSpeed() / 1000));
-                privatelySpeedTv.setText("(" + Config.getInstance(this).getPrivatelySpeed() / 1000 + "~" + (Config.getInstance(this).getPrivatelySpeed() / 1000 + 2) + "秒/个)");
-                privatelySpeedSb.setProgress((int) (Config.getInstance(this).getPrivatelySpeed() / 1000));
-            }
-            if (i == 2) {
-                Config.getInstance(this).setOption(Config.PRIVATELY);
-                attentionSetting.setVisibility(View.GONE);
-                privatelySetting.setVisibility(View.VISIBLE);
-                //私信内容显示
-                privatelyContent.setText(Config.getInstance(this).getPrivatelyContentText());
-            }
-            if (i == 3) {
-                Config.getInstance(this).setOption(Config.PRIVATELY);
-                attentionSetting.setVisibility(View.GONE);
-                privatelySetting.setVisibility(View.VISIBLE);
-                //私信内容显示
-                privatelyContent.setText(Config.getInstance(this).getPrivatelyContentText());
-            }
-            if (i == 4) {
-                Config.getInstance(this).setOption(Config.PRIVATELY);
-                attentionSetting.setVisibility(View.GONE);
-                privatelySetting.setVisibility(View.VISIBLE);
-                //私信内容显示
-                privatelyContent.setText(Config.getInstance(this).getPrivatelyContentText());
-            }
-            if (i == 5) {
-                Config.getInstance(this).setOption(Config.PRIVATELY);
-                attentionSetting.setVisibility(View.GONE);
-                privatelySetting.setVisibility(View.VISIBLE);
-                //私信内容显示
-                privatelyContent.setText(Config.getInstance(this).getPrivatelyContentText());
-            }
-//        if (i == 6) {
-//            Config.getInstance(this).setOption(Config.COMMENT_PRIVATELY);
-//            attentionSetting.setVisibility(View.GONE);
-//            privatelySetting.setVisibility(View.VISIBLE);
-//            privatelyContent.setText(Config.getInstance(this).getPrivatelyContentText());
-//        }
-        }
-        if (adapterView.getId() == R.id.tiktok_version_spinner) {
-            Map<String, String> viewIdMap = new HashMap<>();
-            for (ViewId viewId : Config.getInstance(getApplicationContext()).getViewIds()) {
-                //筛选版本
-                if (versionList.get(i).equals(viewId.getVersion())) {
-                    viewIdMap.put(viewId.getClickInfo(), viewId.getViewId());
-                }
-            }
-            Config.getInstance(getApplicationContext()).setViewIdByVersionMap(viewIdMap);
-        }
-
-    }
 
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {

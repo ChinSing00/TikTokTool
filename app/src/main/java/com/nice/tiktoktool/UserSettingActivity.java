@@ -15,6 +15,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.nice.config.Config;
 import com.nice.entity.ActivationCode;
 import com.nice.entity.ViewId;
+import com.nice.service.MyService;
 import com.nice.utils.AESUtils;
 import com.nice.utils.ApplicationUtil;
 
@@ -55,12 +56,8 @@ public class UserSettingActivity extends Activity {
 
                             //获得viewId信息
                             List<ViewId> list = JSONArray.parseArray(data.getString("viewIds"), ViewId.class);
-                            Map<String, String> viewIdMap = new HashMap<>();
-                            for (ViewId viewId : list) {
-                                viewIdMap.put(viewId.getClickInfo(), viewId.getViewId());
-                            }
                             //配置
-                            Config.getInstance(getApplicationContext()).setViewIdByVersionMap(viewIdMap);
+                            Config.getInstance(getApplicationContext()).setViewIds(list);
 
                             Config.getInstance(getApplicationContext()).setActivationCode(activationCode.getActivationCode());
                             Config.getInstance(getApplicationContext()).setActivated(true);
@@ -188,10 +185,12 @@ public class UserSettingActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        startService(new Intent(this, MyService.class).putExtra(MyService.ACTION, MyService.HIDE));
     }
 
     @Override
     protected void onPause() {
         super.onPause();
+        startService(new Intent(this, MyService.class).putExtra(MyService.ACTION, MyService.SHOW));
     }
 }

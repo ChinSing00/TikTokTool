@@ -13,7 +13,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.nice.config.Config;
-import com.nice.service.TikTokAccessibilityService;
+import com.nice.service.TankAccessibilityService;
 
 /**
  * 悬浮窗view
@@ -105,10 +105,10 @@ public class FloatingView extends FrameLayout {
             if (Config.getInstance(getContext()).getStatus()) {
                 Config.getInstance(getContext()).setStatus(false);
                 beginBtn.setImageResource(R.mipmap.start);
-                TikTokAccessibilityService.executing = false;
+                TankAccessibilityService.executing = false;
                 Toast.makeText(getContext(), "停止执行...", Toast.LENGTH_SHORT).show();
-                TikTokAccessibilityService.privateLetterList.clear();
-                TikTokAccessibilityService.attentionCount = 0;
+                TankAccessibilityService.privateLetterList.clear();
+                TankAccessibilityService.attentionCount = 0;
             } else {
                 Config.getInstance(getContext()).setStatus(true);
                 beginBtn.setImageResource(R.mipmap.stop);
