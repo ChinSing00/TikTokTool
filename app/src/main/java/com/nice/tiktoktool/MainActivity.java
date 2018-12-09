@@ -218,7 +218,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Comp
         list.add("取消关注");
         list.add("私信自己的关注/粉丝");
         list.add("私信他人的关注/粉丝");
-//        list.add("私信评论用户");
+        list.add("私信评论用户");
         return list;
     }
 

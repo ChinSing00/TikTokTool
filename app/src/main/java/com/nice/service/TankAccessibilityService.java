@@ -23,7 +23,6 @@ public class TankAccessibilityService extends AccessibilityService {
     public static List<String> privateLetterList = new ArrayList<>();
     public static List<String> commentPrivateLetterList = new ArrayList<>();
     public static Integer attentionCount = 0;
-    public static Integer commentPrivatelyCount = 0;
     //操作状态  正在私信/关注
     public static Boolean executing = false;
 
@@ -39,7 +38,6 @@ public class TankAccessibilityService extends AccessibilityService {
         try {
 
             if (Config.getInstance(this).getActivated()) {
-
                 AccessibilityNodeInfo accessibilityNodeInfo = this.getRootInActiveWindow();
                 if (accessibilityNodeInfo != null) {
 
@@ -68,8 +66,6 @@ public class TankAccessibilityService extends AccessibilityService {
                                                 executing = false;
                                             }
                                         }).start();
-                                        //清理节点
-                                        accessibilityNodeInfo.recycle();
                                     }
                                 }
                             }
@@ -95,8 +91,6 @@ public class TankAccessibilityService extends AccessibilityService {
                                                 executing = false;
                                             }
                                         }).start();
-                                        //清理节点
-                                        accessibilityNodeInfo.recycle();
                                     }
                                 }
                             }
@@ -118,6 +112,7 @@ public class TankAccessibilityService extends AccessibilityService {
                                                 Looper.prepare();
                                                 //循环当页已获取用户列表
                                                 privately(privatelyViews);
+                                                onServiceConnected();
                                                 //翻页
                                                 if (Config.getInstance(TankAccessibilityService.this).getStatus()) {
                                                     //TODO 用户列表背景
@@ -129,19 +124,12 @@ public class TankAccessibilityService extends AccessibilityService {
                                                 Looper.loop();
                                             }
                                         }).start();
-                                        //清理节点
-                                        accessibilityNodeInfo.recycle();
                                     }
                                 }
                             }
                         } else if (Config.getInstance(this).getOption().equals(Config.COMMENT_PRIVATELY)) {
                             synchronized (TankAccessibilityService.class) {
                                 if (!executing) {
-//                            try {
-//                                PerformClickUtils.JumpViewByViewId(this, "com.ss.android.ugc.aweme:id/a29", "com.ss.android.ugc.aweme:id/yd", 500);
-//                            } catch (InterruptedException e) {
-//                                e.printStackTrace();
-//                            }
                                     final List<AccessibilityNodeInfo> commentViews = accessibilityNodeInfo.findAccessibilityNodeInfosByViewId("com.ss.android.ugc.aweme:id/yl");
                                     if (!commentViews.isEmpty()) {
                                         new Thread(new Runnable() {
@@ -151,8 +139,13 @@ public class TankAccessibilityService extends AccessibilityService {
                                                 Looper.prepare();
                                                 commentPrivately(commentViews);
                                                 //翻页
+                                                try {
+                                                    Thread.sleep(1000);
+                                                } catch (InterruptedException e) {
+                                                    e.printStackTrace();
+                                                }
                                                 if (Config.getInstance(TankAccessibilityService.this).getStatus()) {
-                                                    if (!PerformClickUtils.findViewIdAndScroll(TankAccessibilityService.this, commentViews.get(0).getParent().getViewIdResourceName()) || commentPrivatelyCount > 50) {
+                                                    if (!PerformClickUtils.findViewIdAndScroll(TankAccessibilityService.this, "com.ss.android.ugc.aweme:id/s4") || commentPrivateLetterList.size() > 50) {
                                                         toast("脚本已执行完毕");
                                                     }
                                                 }
@@ -161,12 +154,12 @@ public class TankAccessibilityService extends AccessibilityService {
                                             }
                                         }).start();
                                         //清理节点
-                                        accessibilityNodeInfo.recycle();
                                     }
                                 }
                             }
                         }
                     }
+                    accessibilityNodeInfo.recycle();
                 }
             }
         } catch (Exception e) {
@@ -194,39 +187,94 @@ public class TankAccessibilityService extends AccessibilityService {
      * 视频评论私信
      */
     public synchronized void commentPrivately(List<AccessibilityNodeInfo> commentViews) {
-
+        Map<String, String> viewIdMap = Config.getInstance(this).getViewIdByVersionMap();
         if (Config.getInstance(this).getStatus() && Config.getInstance(this).getOption().equals(Config.COMMENT_PRIVATELY)) {
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            AccessibilityNodeInfo commentView = commentViews.get(0);
-            try {
-                if (Config.getInstance(this).getStatus() && !commentPrivateLetterList.contains(commentView.getParent().getChild(1).getText().toString())) {
-                    Thread.sleep(1000);
-                    Log.i("私信评论：", commentView.getParent().getChild(1).getText().toString());
-                    PerformClickUtils.JumpViewByViewInfo(this, commentView.getParent(), "com.ss.android.ugc.aweme:id/hl", 500);
-                    if (!getRootInActiveWindow().findAccessibilityNodeInfosByText("删除").isEmpty()) {
-                        PerformClickUtils.findTextAndClick(this, "复制");
-                        Thread.sleep(1000);
-                    } else {
-                        PerformClickUtils.JumpViewByViewText(this, "私信回复", "com.ss.android.ugc.aweme:id/a5o", 1000);
-                        PerformClickUtils.findViewIdAndClick(this, "com.ss.android.ugc.aweme:id/a5o");
-                        Thread.sleep(500);
-                        setPrivatelyContent();
-                        getRootInActiveWindow().findAccessibilityNodeInfosByViewId("com.ss.android.ugc.aweme:id/a5o").get(0).performAction(AccessibilityNodeInfo.ACTION_PASTE);
-                        PerformClickUtils.findViewIdAndClick(this, "com.ss.android.ugc.aweme:id/a5r");
-                        Thread.sleep(1000);
-                        commentPrivateLetterList.add(commentView.getParent().getChild(1).getText().toString());
-                        commentPrivatelyCount++;
-                    }
-                    Thread.sleep(Config.getInstance(this).getPrivatelySpeed() + Math.round(2000 * Math.random()));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            for (AccessibilityNodeInfo commentView : commentViews) {
+                String userName = commentView.getParent().getChild(1).getText().toString();
+                try {
+                    if (Config.getInstance(this).getStatus() && !commentPrivateLetterList.contains(userName)) {
+                        Log.i("私信评论：", userName);
+                        PerformClickUtils.JumpViewByViewInfo(this, commentView.getParent().getChild(0), viewIdMap.get(Config.COMMENT_USER_LOGO), 500);
+                        Log.i("昵称：", userName + "--进入更多界面");
+                        //TODO 主页右上角更多按钮  更多页面对话按钮
+                        PerformClickUtils.JumpViewByViewId(this, viewIdMap.get(Config.USER_HP_MORE), viewIdMap.get(Config.MORE_TALK_BTN), 500);
+                        Log.i("昵称：", userName + "--进入私信界面");
+                        //TODO 更多页面对话按钮 发送消息EditText
+                        PerformClickUtils.JumpViewByViewId(this, viewIdMap.get(Config.MORE_TALK_BTN), viewIdMap.get(Config.SEND_MSG_ET), 500);
 
+
+                        //检测是否已经回复过
+                        boolean replied = false;
+                        //已经私信过的不操作
+                        while (!replied && Config.getInstance(this).getStatus()) {
+                            setPrivatelyContent();
+                            Log.i("昵称：", userName + "--私信");
+                            //TODO 发送消息EditText
+                            PerformClickUtils.findViewIdAndClick(this, viewIdMap.get(Config.SEND_MSG_ET));
+                            Thread.sleep(500);
+
+                            int sendCount = 0;
+                            // 模拟粘贴
+                            List<AccessibilityNodeInfo> bcn;
+                            do {
+                                //TODO 发送消息EditText
+                                bcn = this.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(viewIdMap.get(Config.SEND_MSG_ET));
+                                Thread.sleep(500);
+                                sendCount++;
+                                if (sendCount >= 5) {
+                                    break;
+                                }
+                            }
+                            while (bcn.isEmpty() && Config.getInstance(this).getStatus());
+                            Thread.sleep(500);
+
+                            Log.i("昵称：", userName + "--发送私信");
+                            bcn.get(0).performAction(AccessibilityNodeInfo.ACTION_PASTE);
+                            //TODO 发送按钮
+                            PerformClickUtils.findViewIdAndClick(this, viewIdMap.get(Config.SEND_MSG_BTN));
+                            Thread.sleep(500);
+
+                            for (String s : Config.getInstance(this).getPrivatelyContent()) {
+                                if (!getRootInActiveWindow().findAccessibilityNodeInfosByText(s).isEmpty()) {
+                                    replied = true;
+                                }
+                            }
+                        }
+                        Log.i("昵称：", userName + "--返回更多页面");
+                        //TODO 对话界面返回按钮  更多页面对话按钮
+                        PerformClickUtils.JumpViewByViewId(this, viewIdMap.get(Config.TALK_BACK), viewIdMap.get(Config.MORE_TALK_BTN), 2000);
+                        Log.i("昵称：", userName + "--返回主页");
+                        //TODO 更多页面返回按钮  主页右上角更多按钮
+                        PerformClickUtils.JumpViewByViewId(this, viewIdMap.get(Config.MORE_BACK), viewIdMap.get(Config.USER_HP_MORE), 2000);
+                        Log.i("昵称：", userName + "--返回列表");
+                        //TODO 主页返回按钮  用户列表背景
+                        PerformClickUtils.JumpViewByViewId(this, viewIdMap.get(Config.USER_HP_BACK), viewIdMap.get(Config.COMMENT_USER_LOGO), 2000);
+
+//                        if (!getRootInActiveWindow().findAccessibilityNodeInfosByText("删除").isEmpty()) {
+//                            PerformClickUtils.findTextAndClick(this, "复制");
+//                            Thread.sleep(1000);
+//                        } else {
+//                            PerformClickUtils.JumpViewByViewText(this, "私信回复", "com.ss.android.ugc.aweme:id/a5o", 1000);
+//                            PerformClickUtils.findViewIdAndClick(this, "com.ss.android.ugc.aweme:id/a5o");
+//                            Thread.sleep(500);
+//                            setPrivatelyContent();
+//                            getRootInActiveWindow().findAccessibilityNodeInfosByViewId("com.ss.android.ugc.aweme:id/a5o").get(0).performAction(AccessibilityNodeInfo.ACTION_PASTE);
+//                            PerformClickUtils.findViewIdAndClick(this, "com.ss.android.ugc.aweme:id/a5r");
+//                            Thread.sleep(1000);
+                        commentPrivateLetterList.add(userName);
+                        toast("已私信" + commentPrivateLetterList.size() + "人");
+//                        }
+                        Thread.sleep(Config.getInstance(this).getPrivatelySpeed() + Math.round(2000 * Math.random()));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
