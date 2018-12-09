@@ -31,6 +31,8 @@ public class Config {
     public static final String USER_HP_BACK = "USER_HP_BACK";
     public static final String LIST_USER_NAME = "LIST_USER_NAME";
     public static final String COMMENT_USER_LOGO = "COMMENT_USER_LOGO";
+    public static final String COMMENT_BG = "COMMENT_BG";
+    public static final String COMMENT_ITEM = "COMMENT_ITEM";
 
 
     public static final String DEVICE_INFO = Build.MANUFACTURER + "-" + Build.DEVICE + "-" + Build.VERSION.SDK_INT;

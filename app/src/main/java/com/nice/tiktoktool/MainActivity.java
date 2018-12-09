@@ -53,7 +53,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Comp
 
     private List<String> versionList;
 
-    /*构造一个Handler，主要作用有：1）供非UI线程发送Message  2）处理Message并完成UI更新*/
     public Handler uiHandler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -216,8 +215,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Comp
         List<String> list = new ArrayList<>();
         list.add("关注");
         list.add("取消关注");
-        list.add("私信自己的关注/粉丝");
-        list.add("私信他人的关注/粉丝");
+        list.add("私信自己关注/粉丝");
+        list.add("私信他人关注/粉丝");
         list.add("私信评论用户");
         return list;
     }

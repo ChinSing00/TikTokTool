@@ -130,7 +130,7 @@ public class TankAccessibilityService extends AccessibilityService {
                         } else if (Config.getInstance(this).getOption().equals(Config.COMMENT_PRIVATELY)) {
                             synchronized (TankAccessibilityService.class) {
                                 if (!executing) {
-                                    final List<AccessibilityNodeInfo> commentViews = accessibilityNodeInfo.findAccessibilityNodeInfosByViewId("com.ss.android.ugc.aweme:id/yl");
+                                    final List<AccessibilityNodeInfo> commentViews = accessibilityNodeInfo.findAccessibilityNodeInfosByViewId(Config.getInstance(this).getViewIdByVersionMap().get(Config.COMMENT_ITEM));
                                     if (!commentViews.isEmpty()) {
                                         new Thread(new Runnable() {
                                             @Override
@@ -145,7 +145,7 @@ public class TankAccessibilityService extends AccessibilityService {
                                                     e.printStackTrace();
                                                 }
                                                 if (Config.getInstance(TankAccessibilityService.this).getStatus()) {
-                                                    if (!PerformClickUtils.findViewIdAndScroll(TankAccessibilityService.this, "com.ss.android.ugc.aweme:id/s4") || commentPrivateLetterList.size() > 50) {
+                                                    if (!PerformClickUtils.findViewIdAndScroll(TankAccessibilityService.this, Config.getInstance(TankAccessibilityService.this).getViewIdByVersionMap().get(Config.COMMENT_BG))) {
                                                         toast("脚本已执行完毕");
                                                     }
                                                 }
